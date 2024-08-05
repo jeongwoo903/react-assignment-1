@@ -1,12 +1,12 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useRef } from 'react';
 import { apiFetch } from "../../apis";
 
 const TodoAdd = ({ onAddTodo }) => {
     const [inputValue, setInputValue] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDisabled, setIsDisabled] = useState(false);
+    const inputDisable = useRef(null);
 
     const handleInputChange = (e) => {
         setInputValue(e.target.value);
@@ -15,13 +15,15 @@ const TodoAdd = ({ onAddTodo }) => {
     const handleAddClick = async () => {
         if (inputValue.trim() === '') return;
 
+        if (inputDisable.current) {
+            setIsDisabled(true);
+        }
+
         const newTodo = {
             id: Date.now().toString(),
             content: inputValue,
             isChecked: false
         };
-
-        setIsSubmitting(true);
 
         try {
             await apiFetch('/todo', {
@@ -30,24 +32,26 @@ const TodoAdd = ({ onAddTodo }) => {
             });
             setInputValue('');
             alert('추가되었습니다!');
-            onAddTodo(); // 할 일 추가 후 콜백 호출
+            setIsDisabled(false);
+
+            onAddTodo();
         } catch (error) {
             console.error('Error adding todo:', error);
-        } finally {
-            setIsSubmitting(false);
         }
     };
+
+    // submit 한 부분을 state로 처리하면 debounce처리가 안됨. -> ref로 처리.
 
     return (
         <div css={todoAddCss}>
             <input
                 type="text"
                 value={inputValue}
+                ref={inputDisable}
                 onChange={handleInputChange}
-                disabled={isSubmitting}
                 css={inputCss}
             />
-            <button onClick={handleAddClick} disabled={isSubmitting} css={buttonCss}>
+            <button css={buttonCss} disabled={isDisabled} onClick={handleAddClick}>
                 Add
             </button>
         </div>
