@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useState, useEffect } from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import { apiFetch } from "../../apis";
 
 interface TodoProps {
@@ -12,29 +12,24 @@ interface TodoProps {
 const Todo = ({ id, text, checked }: TodoProps) => {
     const [isChecked, setIsChecked] = useState(checked);
 
-    const checkedHandler = () => {
-        setIsChecked(!isChecked)
-    }
+    const updateTodoData = async () => {
+        setIsChecked(!isChecked);
 
-    useEffect(() => {
-        const updateTodoData = async () => {
-            try {
-                const data = await apiFetch(`/todo/${id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({isChecked: checked}),
-                });
-                console.log(data);
-            } catch (error) {
-                console.error('Error updating data:', error);
-            }
-        };
+        try {
+            const data = await apiFetch(`/todo/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({isChecked: !isChecked}),
+            });
+        } catch (error) {
+            console.error('Error updating data:', error);
+        }
+    };
 
-        updateTodoData();
-    }, [isChecked]);
+    const todoCallback = useCallback(updateTodoData, [isChecked]);
 
     return (
         <div css={todoCss}>
-            <input type="checkbox" checked={isChecked} onChange={checkedHandler} />
+            <input type="checkbox" checked={isChecked} onChange={todoCallback} />
             <div css={todoTextCss(isChecked)}>{text}</div>
         </div>
     );
